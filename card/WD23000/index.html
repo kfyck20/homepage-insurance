@@ -232,13 +232,17 @@ function boardIndex(body,posts,mode){
 }
 (async()=>{
  const root=document.getElementById('card');
- const id=location.pathname.match(/^\/card\/(WD23000|WD26002)\/(?:index\.html)?$/)?.[1];
+const cardSlugs = Object.freeze({ WD23000: 'cyk', WD26002: 'hm' });
+ const pathPart = location.pathname.split('/')[2];
+ const id = Object.keys(cardSlugs).find(id => id === pathPart || cardSlugs[id] === pathPart);
  try{
   if(!id)throw Error();
+  const path = '/card/' + cardSlugs[id] + '/';
+  if (location.pathname !== path) history.replaceState(null, '', path + location.search + location.hash);
   const cfg=AGENTS[id],res=await fetch(cfg.url+'/rest/v1/wd_mobile_cards?select=published&agent_id=eq.'+id,{headers:{apikey:cfg.key},credentials:'omit',cache:'no-store'});
   if(!res.ok)throw Error();const rows=await res.json();const card=rows[0]?.published;if(!card?.name){root.textContent='아직 공개된 명함이 없어요.';return}
   document.title=card.name+' 모바일 명함';root.innerHTML=renderCard(card);
-  bindCard(root,card,()=>location.origin+'/card/'+id+'/');
+  bindCard(root,card,()=>location.origin+path);
   const openBoard=()=>{if(location.hash==='#board'&&!document.querySelector('.boardDrawer[open]'))root.querySelector('[data-board]')?.click()};openBoard();window.addEventListener('hashchange',openBoard);
  }catch{root.textContent='현재 이 명함을 열 수 없어요. 잠시 후 다시 확인해 주세요.'}
 })();
